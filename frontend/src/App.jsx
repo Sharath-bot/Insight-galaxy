@@ -1,46 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login';
 
-// Portals
+// Layout Portals
 import AdminPortal from './admin/AdminPortal';
 import ResearcherPortal from './researcher/ResearcherPortal';
 import UserPortal from './user/UserPortal';
 
-// Admin Table Components (Placeholders)
+// Admin-Specific Tables
 import Astronauts from './admin/Astronauts';
+import AdminDiscoveries from './admin/Discoveries';
 import Spacecraft from './admin/Spacecraft';
 import Agencies from './admin/Agencies';
-import CreateAccount from './admin/CreateAccount';
 import UserList from './admin/UserList';
 import Roles from './admin/Roles';
 import Countries from './admin/Countries';
 import Instruments from './admin/Instruments';
-import Feedback from './admin/Feedback';
+import AdminCelestialObjects from './admin/CelestialObject';
+import AdminObservatories from './admin/Observatories';
+import Telescopes from './admin/Telescopes';
 
-// ... ensure these match the filenames exactly!
-
-// Researcher/Common Components
-import CelestialObjects from './researcher/CelestialObjects';
+// Researcher & Shared Tables
 import Missions from './researcher/Missions';
-import Observatories from './researcher/Observatories';
-import Telescopes from './researcher/Telescopes';
 import Discoveries from './researcher/Discoveries';
 import Observations from './researcher/Observations';
-import AnalyticsDashboard from './researcher/AnalyticsDashboard';
+import ResearchAnalytics from './researcher/Analytics';
 
-// User Components
+// User-Specific Components
 import Favorites from './user/Favorites';
-import UserMissionLogs from './user/UserMissionLogs';
+import UserDashboard from './user/UserDashboard'; 
+
 function App() {
-  // 1. INITIALIZE FROM LOCALSTORAGE
-  // This is the fix for auto-logout: it checks browser memory on load
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('insight_user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch { return null; }
   });
 
-  // 2. LOGOUT FUNCTION
   const handleLogout = () => {
     localStorage.removeItem('insight_user');
     setUser(null);
@@ -49,68 +46,57 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* PUBLIC ROUTE */}
         <Route path="/" element={
-          !user ? <Login setUser={setUser} /> : <Navigate to={
-            user.role_id === 1 ? "/admin" : 
-            user.role_id === 2 ? "/researcher" : "/user"
-          } />
+          !user ? <Login setUser={setUser} /> : (
+            user.role_id === 1 ? <Navigate to="/admin" /> : 
+            user.role_id === 2 ? <Navigate to="/researcher" /> : 
+            <Navigate to="/user" />
+          )
         } />
 
-        {/* ADMIN PORTAL (Role ID 1) */}
+        {/* ADMIN CLUSTER (Role 1) */}
         <Route path="/admin" element={<AdminPortal user={user} setUser={handleLogout} />}>
-          {/* Dashboard Default View */}
-          <Route index element={<div className="p-8 text-slate-800">Welcome to Admin Command Center</div>} />
-          
-          {/* Sub-Routes for Sidebar Links */}
-          <Route path="users" element={<UserList />} />
-          <Route path="create-account" element={<CreateAccount />} />
-          <Route path="astronauts" element={<Astronauts />} />
-          <Route path="spacecraft" element={<Spacecraft />} />
-          <Route path="agencies" element={<Agencies />} />
-          <Route path="missions" element={<Missions />} />
-          <Route path="objects" element={<CelestialObjects user={user} />} />
-          <Route path="roles" element={<Roles />} />
-          <Route path="countries" element={<Countries />} />
-          <Route path="instruments" element={<Instruments />} />
-          <Route path="feedback" element={<Feedback />} />
-          <Route path="observatories" element={<Observatories />} />
-          <Route path="telescopes" element={<Telescopes />} />
-          <Route path="instruments" element={<Instruments />} />
-          <Route path="observations" element={<Observations />} />
-          <Route path="discoveries" element={<Discoveries />} />
-          <Route path="favourites" element={<Favorites user={user} />} />
-
+          <Route index element={<div className="p-8 font-mono font-black uppercase">Main Command Center</div>} />
+          <Route path="users" element={<UserList user={user} />} />
+          <Route path="roles" element={<Roles user={user} />} />
+          <Route path="missions" element={<Missions user={user} />} />
+          <Route path="celestialobjects" element={<AdminCelestialObjects user={user} />} />
+          <Route path="astronauts" element={<Astronauts user={user} />} />
+          <Route path="discoveries" element={<AdminDiscoveries user={user} />} />
+          <Route path="agencies" element={<Agencies user={user} />} />
+          <Route path="spacecraft" element={<Spacecraft user={user} />} />
+          <Route path="observatories" element={<AdminObservatories user={user} />} />
+          <Route path="telescopes" element={<Telescopes user={user} />} />
+          <Route path="instruments" element={<Instruments user={user} />} />
+          <Route path="observations" element={<Observations user={user} />} />
+          <Route path="countries" element={<Countries user={user} />} />
         </Route>
-          {/* Add remaining admin routes here */}
-        
-{/* RESEARCHER PORTAL CONFIGURATION */}
-<Route path="/researcher" element={<ResearcherPortal user={user} setUser={handleLogout} />}>
-  {/* Analytics Dashboard (The default view) */}
 
-  
-  {/* Data Access Routes */}
-  <Route path="missions" element={<Missions />} />
-  <Route path="celestial_objects" element={<CelestialObjects user={user} />} />
-  <Route path="discoveries" element={<Discoveries />} />
-  <Route path="observations" element={<Observations />} />
-  <Route path="instruments" element={<Instruments />} />
-  <Route path="observatories" element={<Observatories />} />
-  <Route path="spacecraft" element={<Spacecraft />} />
-  <Route path="astronauts" element={<Astronauts />} />
-  <Route path="agencies" element={<Agencies />} />
-  <Route path="analytics" element={<AnalyticsDashboard />} />
-</Route>
-        {/* EXPLORER/USER PORTAL (Role ID 3) */}
-        
+        {/* RESEARCHER CLUSTER (Role 2) */}
+        <Route path="/researcher" element={<ResearcherPortal user={user} setUser={handleLogout} />}>
+          <Route index element={<ResearchAnalytics />} />
+          <Route path="analytics" element={<ResearchAnalytics />} />
+          <Route path="missions" element={<Missions user={user} />} />
+          <Route path="telescopes" element={<Telescopes user={user} />} />
+          <Route path="discoveries" element={<Discoveries user={user} />} />
+          <Route path="observations" element={<Observations user={user} />} />
+          <Route path="celestial_objects" element={<AdminCelestialObjects user={user} />} />
+          <Route path="astronauts" element={<Astronauts user={user} />} />
+          <Route path="spacecraft" element={<Spacecraft user={user} />} />
+          <Route path="agencies" element={<Agencies user={user} />} />
+          <Route path="observatories" element={<AdminObservatories user={user} />} />
+          <Route path="instruments" element={<Instruments user={user} />} />
+        </Route>
+
+        {/* USER CLUSTER (Role 3) */}
         <Route path="/user" element={<UserPortal user={user} setUser={handleLogout} />}>
-        
-          <Route path="objects" element={<CelestialObjects user={user} />} />
+          <Route index element={<UserDashboard />} />
+          <Route path="missions" element={<Missions user={user} />} />
+          <Route path="agencies" element={<Agencies user={user} />} />
+          <Route path="objects" element={<AdminCelestialObjects user={user} />} />
           <Route path="favorites" element={<Favorites user={user} />} />
-          <Route path="mission-logs" element={<UserMissionLogs />} />
         </Route>
 
-        {/* CATCH ALL */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

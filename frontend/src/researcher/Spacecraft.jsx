@@ -1,87 +1,100 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import API from '../api';
-import { Plane, Zap, Shield, Database, Search, Activity } from 'lucide-react';
+import { Plane, Plus, Trash2, Edit2, Check, X, Rocket, Loader2 } from 'lucide-react';
 
-const Spacecraft = () => {
-  const [vessels, setVessels] = useState([]);
-  const [search, setSearch] = useState('');
+const Spacecraft = ({ user }) => {
+  // 1. PLACE THE LOGIC HERE: Strict Role-Based UI Guard
+  const isAdmin = user?.role_id === 1;
 
-  useEffect(() => {
-    const fetchSpacecraft = async () => {
+  const [ships, setShips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+
+  // CRUD State
+  const [newShip, setNewShip] = useState({ name: '', type: '', capacity: '' });
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({});
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await API.get('/api/spacecraft');
+      setShips(res.data || []);
+    } catch (err) {
+      console.error("Hangar Link Failure:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  // 2. LOGIC PROTECTION: Handler guards
+  const handleDelete = async (id) => {
+    if (!isAdmin) return; // Prevent Researcher from triggering API
+    if (window.confirm("Permanent Decommission: Are you sure?")) {
       try {
-        // GET request to the spacecraft table
-        const res = await API.get('/api/spacecraft');
-        setVessels(res.data);
-      } catch (err) {
-        console.error("Sensor failure: Unable to sync spacecraft telemetry.");
-      }
-    };
-    fetchSpacecraft();
-  }, []);
+        await API.delete(`/api/spacecraft/${id}`);
+        fetchData();
+      } catch (err) { alert("Action denied."); }
+    }
+  };
 
-  const filteredVessels = vessels.filter(v => 
-    v.name.toLowerCase().includes(search.toLowerCase()) ||
-    v.type?.toLowerCase().includes(search.toLowerCase())
-  );
+  if (loading) return <div className="p-10 text-blue-600 font-mono animate-pulse flex items-center gap-2"><Loader2 className="animate-spin" /> SCANNING HANGAR...</div>;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 font-mono animate-in fade-in duration-700">
+      {/* HEADER SECTION */}
+      <div className="flex justify-between items-center border-b border-slate-200 pb-6">
         <div>
-          <h2 className="text-2xl font-black text-purple-900 uppercase">Spacecraft Registry</h2>
-          <p className="text-purple-400 text-[10px] font-bold uppercase tracking-[0.3em]">Fleet Status & Vessel Specifications</p>
+          <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tighter">Spacecraft Fleet</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Vehicle Status & Deployment Registry</p>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 size-4 text-purple-400" />
-          <input 
-            type="text" 
-            placeholder="Identify vessel..."
-            className="pl-10 pr-4 py-2 bg-white border border-purple-100 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none w-64"
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        
+        {/* 3. UI GUARD: Add button hidden for Researchers */}
+        {isAdmin && (
+          <button 
+            onClick={() => setShowForm(!showForm)} 
+            className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase shadow-lg hover:bg-blue-600 transition-all"
+          >
+            {showForm ? <X size={16}/> : <><Plus size={16}/> Register Vehicle</>}
+          </button>
+        )}
       </div>
 
+      {/* CREATE FORM: Hidden for Researchers */}
+      {showForm && isAdmin && (
+        <form className="bg-slate-900 p-8 rounded-[2.5rem] shadow-2xl grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-8 text-white">
+          <input className="bg-white/5 border border-white/10 rounded-2xl p-3 text-sm" placeholder="SHIP NAME" onChange={e => setNewShip({...newShip, name: e.target.value})} />
+          <input className="bg-white/5 border border-white/10 rounded-2xl p-3 text-sm" placeholder="VEHICLE TYPE" onChange={e => setNewShip({...newShip, type: e.target.value})} />
+          <button className="bg-blue-600 rounded-2xl font-black uppercase text-xs">Authorize Entry</button>
+        </form>
+      )}
+
+      {/* DATA GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredVessels.map((vessel) => (
-          <div key={vessel.spacecraft_id} className="bg-white rounded-3xl p-6 border border-purple-50 shadow-sm hover:shadow-xl transition-all group">
+        {ships.map(ship => (
+          <div key={ship.spacecraft_id} className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all relative group overflow-hidden">
             <div className="flex justify-between items-start mb-6">
-              <div className="p-3 bg-purple-900 rounded-2xl group-hover:scale-110 transition-transform">
-                <Plane className="size-6 text-purple-300" />
+              <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <Plane size={24} />
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100">
-                <Activity className="size-3" />
-                <span className="text-[10px] font-black uppercase">{vessel.status || 'Nominal'}</span>
-              </div>
+              
+              {/* 4. UI GUARD: Edit/Delete icons hidden for Researchers */}
+              {isAdmin && (
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-600 hover:text-white"><Edit2 size={14}/></button>
+                  <button onClick={() => handleDelete(ship.spacecraft_id)} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white"><Trash2 size={14}/></button>
+                </div>
+              )}
             </div>
 
-            <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight mb-4">{vessel.name}</h3>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Class</p>
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Shield className="size-3" />
-                  <span className="text-xs font-bold">{vessel.type || 'Orbiter'}</span>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">Fuel Type</p>
-                <div className="flex items-center gap-2 text-slate-700">
-                  <Zap className="size-3" />
-                  <span className="text-xs font-bold">{vessel.fuel_type || 'Liquid O2'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-slate-400">
-                <Database className="size-3" />
-                <span className="text-[10px] font-bold uppercase">ID: {vessel.spacecraft_id}</span>
-              </div>
-              <button className="text-[10px] font-black text-purple-600 uppercase hover:underline">
-                Maintenance Logs
-              </button>
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">{ship.name}</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase mt-1 tracking-widest">{ship.type || 'INTERSTELLAR CLASS'}</p>
+            
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[9px] font-black bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full uppercase">Operational</span>
+              <span className="text-[9px] font-bold text-slate-300">REG: #{ship.spacecraft_id}</span>
             </div>
           </div>
         ))}

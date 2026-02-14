@@ -19,15 +19,14 @@ import {
 } from 'lucide-react';
 
 const navigation = [
-  { name: 'Mission Control', href: '/researcher', icon: LayoutDashboard },
+  
   { name: 'Missions', href: '/researcher/missions', icon: Rocket },
   { name: 'Celestial Objects', href: '/researcher/celestial_objects', icon: Globe },
   { name: 'Discoveries', href: '/researcher/discoveries', icon: Star },
   { name: 'Observations', href: '/researcher/observations', icon: Search },
   { name: 'Instruments', href: '/researcher/instruments', icon: Microscope },
   { name: 'Observatories', href: '/researcher/observatories', icon: Radio },
-  { name: 'Spacecraft', href: '/researcher/spacecraft', icon: Plane },
-  { name: 'Astronauts', href: '/researcher/astronauts', icon: UserCircle },
+ 
   { name: 'Agencies', href: '/researcher/agencies', icon: Building2 },
   { name: 'Analytics', href: '/researcher/analytics', icon: BarChart3 }, // Added Analytics
 ];

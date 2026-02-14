@@ -1,31 +1,12 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { cn } from '../utils';
-import {
-  Globe,
-  Star,
-  Rocket,
-
-  LayoutDashboard,
-  Heart,
-  LogOut,
-  User as UserIcon
-} from 'lucide-react';
-
-const navigation = [
-  { name: 'My Dashboard', href: '/user', icon: LayoutDashboard },
-  { name: 'Star Map', href: '/user/objects', icon: Globe },
-  { name: 'Discoveries', href: '/user/discoveries', icon: Star },
-  { name: 'Mission Logs', href: '/user/missions', icon: Rocket },
-
-  { name: 'Favorites', href: '/user/favorites', icon: Heart },
-];
+import { Star, Home, Rocket, Building2, Globe, LogOut } from 'lucide-react';
 
 export default function UserPortal({ user, setUser }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Role Security: role_id 3 is the standard User
+  // Role Security Guard
   if (!user || user.role_id !== 3) {
     return <Navigate to="/" />;
   }
@@ -35,72 +16,48 @@ export default function UserPortal({ user, setUser }) {
     navigate('/');
   };
 
+  const menuItems = [
+    { name: 'Dashboard', href: '/user', icon: Home },
+    { name: 'Missions', href: '/user/missions', icon: Rocket },
+    { name: 'Agencies', href: '/user/agencies', icon: Building2 },
+    //{ name: 'Star Catalog', href: '/user/objects', icon: Globe },
+    { name: 'Favorites', href: '/user/favorites', icon: Star },
+  ];
+
   return (
-    <div className="flex h-screen bg-slate-50 font-mono">
-      <aside className="w-64 bg-gradient-to-b from-emerald-900 to-teal-950 text-white flex flex-col shadow-2xl">
-        <div className="p-6 border-b border-emerald-800/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/20 rounded-lg border border-emerald-400/30">
-              <UserIcon className="size-6 text-emerald-300" />
-            </div>
-            <div>
-              <h1 className="font-bold text-sm uppercase tracking-tighter">Insight Galaxy</h1>
-              <p className="text-[10px] text-emerald-300 uppercase tracking-widest">User Terminal</p>
-            </div>
-          </div>
+    <div className="flex h-screen bg-slate-50 font-sans">
+      {/* Sidebar */}
+      <aside className="w-64 bg-indigo-950 text-white flex flex-col shadow-2xl">
+        <div className="p-8 border-b border-white/10">
+          <h1 className="font-black text-xl tracking-tighter uppercase">Insight Galaxy</h1>
+          <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-1">Explorer Access</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          <nav className="space-y-1">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              const Icon = item.icon;
-              
-              return (
-                <button
-                  key={item.name}
-                  onClick={() => navigate(item.href)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[11px] uppercase tracking-widest transition-all',
-                    isActive
-                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/40'
-                      : 'text-emerald-200/70 hover:bg-emerald-800/50 hover:text-white'
-                  )}
-                >
-                  <Icon className="size-4" />
-                  <span>{item.name}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        <nav className="flex-1 p-4 space-y-1">
+          {menuItems.map((item) => (
+            <button
+              key={item.name}
+              onClick={() => navigate(item.href)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                location.pathname === item.href ? 'bg-indigo-600 text-white shadow-lg' : 'text-indigo-200 hover:bg-white/5'
+              }`}
+            >
+              <item.icon size={18} />
+              <span>{item.name}</span>
+            </button>
+          ))}
+        </nav>
 
-        <div className="p-4 border-t border-emerald-800/50">
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs uppercase text-emerald-300 hover:bg-red-500/20 hover:text-red-300 transition-all">
-            <LogOut className="size-4" />
-            <span>Sign Out</span>
+        <div className="p-6 border-t border-white/10">
+          <button onClick={handleLogout} className="flex items-center gap-3 text-xs font-bold text-indigo-300 hover:text-red-400 uppercase tracking-widest">
+            <LogOut size={18} /> Logout
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto bg-[#f0fdf4]">
-        <div className="p-8">
-            <Outlet />
-            {location.pathname === '/user' && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                    <header className="mb-8">
-                      <h2 className="text-2xl font-black text-emerald-900 uppercase">Welcome Back</h2>
-                      <p className="text-emerald-600 text-xs font-bold uppercase tracking-[0.2em]">Viewing Insight Galaxy Records</p>
-                    </header>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-3xl border border-emerald-100 shadow-sm">
-                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Role Assigned</p>
-                            <p className="text-xl font-black text-emerald-700 mt-1 uppercase tracking-tighter">Standard User</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+      {/* Content Area */}
+      <main className="flex-1 overflow-auto p-10">
+        <Outlet context={user} />
       </main>
     </div>
   );
